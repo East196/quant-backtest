@@ -16,17 +16,18 @@ from utils.plot import BacktestPlotter
 
 def main():
     print("="*60)
-    print("量化回测框架 - 示例")
+    print("量化回测框架 - 示例（真实数据）")
     print("="*60)
     
     # 1. 准备数据
     print("\n步骤1: 准备数据...")
     data_manager = DataManager()
     
-    # 生成模拟数据（实际使用时可以加载真实数据）
-    data = data_manager.generate_sample_data(symbol='600570', days=500)
+    # 获取真实数据
+    data = data_manager.get_data(symbol='600570', use_real=True)
     print(f"数据形状: {data.shape}")
     print(f"日期范围: {data.index[0]} 至 {data.index[-1]}")
+    print(f"最新收盘价: ¥{data['close'].iloc[-1]:.2f}")
     
     # 2. 创建回测引擎
     print("\n步骤2: 创建回测引擎...")

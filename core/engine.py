@@ -112,20 +112,25 @@ class BacktestEngine:
             signal = signals.iloc[i]
             
             # 买入信号
+            # 买入信号
             if signal == 1 and position == 0 and cash > 0:
-                # 计算可买数量（假设可以买零股）
-                shares = cash / close
-                commission_fee = shares * close * self.commission
+                # 计算可买数量（考虑手续费）
+                # 资金 = 数量 * 价格 * (1 + 手续费率)
+                # 数量 = 资金 / (价格 * (1 + 手续费率))
+                max_shares = cash / (close * (1 + self.commission))
+                commission_fee = max_shares * close * self.commission
+                cost = max_shares * close
                 
                 # 执行买入
-                position = shares
-                cash -= (shares * close + commission_fee)
+                position = max_shares
+                cash -= (cost + commission_fee)
                 
                 trades.append({
                     'date': date,
                     'type': 'BUY',
                     'price': close,
-                    'shares': shares,
+                    'shares': max_shares,
+                    'cost': cost,
                     'commission': commission_fee,
                     'cash': cash
                 })
@@ -206,10 +211,13 @@ class BacktestEngine:
         buy_trades = [t for t in trades if t['type'] == 'BUY']
         sell_trades = [t for t in trades if t['type'] == 'SELL']
         
-        # 计算盈利交易
+        # 计算盈利交易（考虑手续费）
         profits = []
         for i in range(min(len(buy_trades), len(sell_trades))):
-            profit = (sell_trades[i]['price'] - buy_trades[i]['price']) * buy_trades[i]['shares']
+            buy_cost = buy_trades[i]['price'] * buy_trades[i]['shares']
+            sell_revenue = sell_trades[i]['price'] * sell_trades[i]['shares']
+            total_commission = buy_trades[i]['commission'] + sell_trades[i]['commission']
+            profit = sell_revenue - buy_cost - total_commission
             profits.append(profit)
             
         win_trades = [p for p in profits if p > 0]
